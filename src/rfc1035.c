@@ -1417,9 +1417,17 @@ static unsigned long crec_ttl(struct crec *crecp, time_t now)
   
   /* Return the Max TTL value if it is lower then the actual TTL */
   if (daemon->max_ttl == 0 || ((unsigned)(crecp->ttd - now) < daemon->max_ttl))
-    return crecp->ttd - now;
+  { 
+    /* Return the Min TTL value if it is lower than mininum TTL. */
+    if( (unsigned)(crecp->ttd - now) > daemon->min_ttl)
+    	return crecp->ttd - now;
+    else
+    	return daemon->min_ttl;
+  }
   else
+  {
     return daemon->max_ttl;
+  }
 }
   
 

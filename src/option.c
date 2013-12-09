@@ -61,7 +61,7 @@ struct myoption {
 };
 #endif
 
-#define OPTSTRING "951yZDNLERKzowefnbvhdkqr:m:p:c:l:s:i:t:u:g:a:x:S:C:A:T:H:Q:I:B:F:G:O:M:X:V:U:j:P:J:W:Y:2:4:6:7:8:0:3:"
+#define OPTSTRING "951yZDNLERKzowefnbvhdkqr:m:p:c:l:s:i:t:u:g:a:x:S:C:A:T:H:Q:I:B:F:G:O:M:X:V:U:j:P:J:W:Y:2:4:6:7:8:0:3:_:"
 
 /* options which don't have a one-char version */
 #define LOPT_RELOAD       256
@@ -202,6 +202,7 @@ static const struct myoption opts[] =
     { "srv-host", 1, 0, 'W' },
     { "localise-queries", 0, 0, 'y' },
     { "txt-record", 1, 0, 'Y' },
+    { "min-ttl", 1, 0, '_' },
     { "dns-rr", 1, 0, LOPT_RR },
     { "enable-dbus", 2, 0, '1' },
     { "bootp-dynamic", 2, 0, '3' },
@@ -376,6 +377,7 @@ static struct {
   { '8', ARG_ONE, "<facilty>|<file>", gettext_noop("Log to this syslog facility or file. (defaults to DAEMON)"), NULL },
   { '9', OPT_LEASE_RO, NULL, gettext_noop("Do not use leasefile."), NULL },
   { '0', ARG_ONE, "<integer>", gettext_noop("Maximum number of concurrent DNS queries. (defaults to %s)"), "!" }, 
+  { '_', ARG_DUP, "<integer>", gettext_noop("Force all records to have a mininum TTL."), NULL}, 
   { LOPT_RELOAD, OPT_RELOAD, NULL, gettext_noop("Clear DNS cache when reloading %s."), RESOLVFILE },
   { LOPT_NO_NAMES, ARG_DUP, "[=tag:<tag>]...", gettext_noop("Ignore hostnames provided by DHCP clients."), NULL },
   { LOPT_OVERRIDE, OPT_NO_OVERRIDE, NULL, gettext_noop("Do NOT reuse filename and server fields for extra DHCP options."), NULL },
@@ -2312,6 +2314,15 @@ static int one_opt(int option, char *arg, char *errstr, char *gen_err, int comma
 	  daemon->local_ttl = (unsigned long)ttl;
 	break;
       }
+      case '_':
+      {
+        int ttl;
+        if(!atoi_check(arg, &ttl))
+              option = '?';
+        else
+              daemon->min_ttl = (unsigned long) ttl;
+        break;
+      }
       
 #ifdef HAVE_DHCP
     case 'X': /* --dhcp-lease-max */
@@ -4079,6 +4090,7 @@ void read_opts(int argc, char **argv, char *compile_opts)
   daemon->namebuff = buff;
 
   /* Set defaults - everything else is zero or NULL */
+  daemon->min_ttl = 0;
   daemon->cachesize = CACHESIZ;
   daemon->ftabsize = FTABSIZ;
   daemon->port = NAMESERVER_PORT;
